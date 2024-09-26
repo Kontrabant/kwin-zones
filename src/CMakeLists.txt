@@ -22,6 +22,12 @@ ecm_add_qtwayland_server_protocol(kwin_effect_zones
     BASENAME ext-zones-v1
 )
 
+ecm_add_qtwayland_server_protocol(kwin_effect_zones
+    PRIVATE_CODE
+    PROTOCOL ${WaylandProtocols_DATADIR}/stable/xdg-shell/xdg-shell.xml
+    BASENAME xdg-shell
+)
+
 target_link_libraries(kwin_effect_zones KWin::kwin KF6::ConfigGui)
 install(
     TARGETS
