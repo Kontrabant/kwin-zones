@@ -4,6 +4,7 @@
   <copyright>
     Copyright © 2023-2024 Matthias Klumpp
     Copyright ©      2024 Victoria Brekenfeld
+    Copyright ©      2024 Frank Praznik
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -51,6 +52,30 @@
       It currently can only be created from a 'xdg_toplevel' via a
       'get_zone_item' request.
     </description>
+
+    <request name="get_frame_extents">
+      <description summary="request the extents of the frame bordering the item">
+        Request the extents of the frame bordering the item's content area.
+
+        If the item has no associated frame, all extents will be zero.
+
+        After a call to this request, a 'frame_extents' event must be emitted
+        with the item's frame extents.
+      </description>
+    </request>
+
+    <event name="frame_extents">
+      <description summary="the extents of the frame bordering the item">
+        The 'frame_extents' event describes the current extents of the frame
+        bordering the item's content area.
+
+        It is emitted as a response to 'get_frame_extents'.
+      </description>
+      <arg name="top" type="int" summary="current height of the frame bordering the top of the item"/>
+      <arg name="bottom" type="int" summary="current height of the frame bordering the bottom of the item"/>
+      <arg name="left" type="int" summary="current width of the frame bordering the left of the item"/>
+      <arg name="right" type="int" summary="current width of the frame bordering the right of the item"/>
+    </event>
 
     <request name="destroy" type="destructor">
       <description summary="delete this object">
@@ -159,34 +184,33 @@
       by adding a frame around it and/or a background.
 
       All items associated with a zone should ideally be always contained
-      within it. If possible, the compositor should ensure this by resizing
+      within it. If possible, the compositor may ensure this by resizing
       zone accordingly if the user moves items surfaces out of the zone's
       original bounds.
+      If this can not be done, the compositor must force the item to leave the
+      respective zone (emitting an 'item_left' event).
 
       All item surface coordinates (x, y) are relative to the selected zone.
       They are using the 'size' of the respective zone as coordinate system,
       with (0, 0) being in the top left corner.
 
-      An item (e.g. a toplevel window) is considered "in bounds" if its
-      top-left coordinate is within the zone's coordinate system (the surface
-      may extent beyond the zone's size, but it may not be fully visible to the
-      user in that case).
+      An item (e.g. a toplevel window) is considered "in bounds" if it can easily
+      be moved within the zone by the user (e.g. enough of its title bar is in
+      the zone so an item can be dragged around).
+      The surface of the item may extent beyond the zone's size, but it may not
+      be fully visible to the user in that case.
+      This behavior is subject to sensible compositor policy.
 
       If a zone item is moved out of the top/left boundaries of the zone by
       user interaction, its coordinates must become negative, relative to the
-      zones top-left coordinate origin. A client can not set negative
-      coordinates on a zone item (and thereby move it out of the zone).
+      zones top-left coordinate origin. A client may set negative coordinates,
+      but the compositor must ensure the item is still visible and accessible
+      to the user and is not moved into invisible space outside of a zone.
 
-      If a zone item is moved out of a zone's bottom/right boundaries by the
-      user or compositor, the compositor should try to resize the zone
-      accordingly to make sure all zone items are still contained within it.
-      If this can not be done, the compositor must force the item to leave the
-      respective zone (emitting an 'item_left' event).
-
-      The absolute position of the zone within the compositor is opaque to the
-      client and the compositor may move the entore zone around without the
-      client's notice. It may also be arbitrarily resized, in which case the
-      respective 'size' event must be emitted again to notify the client.
+      The absolute position of the zone within the compositor's coordinate space
+      is opaque to the client and the compositor may move the entore zone around
+      without the client's notice. It may also be arbitrarily resized, in which
+      case the respective 'size' event must be emitted again to notify the client.
 
       Zone items are allowed to have a "layer" attribute, to keep them permanently
       above or below other surfaces in the same zone.

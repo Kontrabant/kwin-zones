@@ -47,6 +47,18 @@ public:
         return waylandServer()->findWindow(m_toplevel->surface());
     }
 
+    void ext_zone_item_v1_get_frame_extents(Resource *resource) override
+    {
+        auto *w = window();
+        if (w) {
+            const QRectF frame = w->frameGeometry();
+            const QRectF client = w->clientGeometry();
+            send_frame_extents(resource->handle,
+                               client.top() - frame.top(), frame.bottom() - client.bottom(),
+                               client.left() - frame.left(), frame.right() - client.right());
+        }
+    }
+
     int layer_index = 0;
     XdgToplevelInterface *const m_toplevel;
     ExtZoneV1Interface* m_zone = nullptr;
